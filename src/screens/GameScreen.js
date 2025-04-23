@@ -17,8 +17,9 @@ import { useLanguage } from '../context/LanguageContext';
 
 const windowWidth = Dimensions.get('window').width;
 const BUBBLE_SIZE = windowWidth / 8;
-const GRID_SIZE = 8;
-const COLORS = ['#8e24aa', '#3949ab', '#1e88e5', '#00897b', '#43a047', '#f4511e'];
+const GRID_SIZE = 7;
+// Updated with your requested dark colors
+const COLORS = ['#B71C1C', '#0D47A1', '#1B5E20', '#4A148C', '#E65100', '#263238'];
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -105,6 +106,65 @@ export default function GameScreen({ navigation }) {
     return matches;
   };
 
+  // New function to check if any valid matches exist on the board
+  const checkForPossibleMatches = () => {
+    for (let row = 0; row < GRID_SIZE; row++) {
+      for (let col = 0; col < GRID_SIZE; col++) {
+        if (bubbles[row][col].visible) {
+          const color = bubbles[row][col].color;
+          const matches = checkAdjacentBubbles(row, col, color);
+          if (matches.length >= 2) {
+            return true; // Found at least one valid match
+          }
+        }
+      }
+    }
+    return false; // No valid matches found
+  };
+
+  // Function to shuffle the board when no matches are available
+  const shuffleBoard = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    
+    // Get all visible bubbles
+    const visibleBubbles = [];
+    bubbles.forEach(row => {
+      row.forEach(bubble => {
+        if (bubble.visible) {
+          visibleBubbles.push(bubble.color);
+        }
+      });
+    });
+    
+    // Shuffle colors
+    for (let i = visibleBubbles.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [visibleBubbles[i], visibleBubbles[j]] = [visibleBubbles[j], visibleBubbles[i]];
+    }
+    
+    // Create new board with shuffled colors
+    const newBubbles = [...bubbles.map(row => [...row])];
+    let index = 0;
+    
+    for (let row = 0; row < GRID_SIZE; row++) {
+      for (let col = 0; col < GRID_SIZE; col++) {
+        if (newBubbles[row][col].visible) {
+          newBubbles[row][col].color = visibleBubbles[index++];
+        }
+      }
+    }
+    
+    setBubbles(newBubbles);
+    
+    // Check if the shuffled board has any matches
+    // If still no matches after shuffle (rare but possible), shuffle again
+    setTimeout(() => {
+      if (!checkForPossibleMatches()) {
+        shuffleBoard();
+      }
+    }, 100);
+  };
+
   const popBubbles = (row, col) => {
     if (gameOver || moves <= 0) return;
 
@@ -133,7 +193,8 @@ export default function GameScreen({ navigation }) {
         }
       }
 
-      setScore(score + matches.length * 10);
+      const newScore = score + matches.length * 10;
+      setScore(newScore);
       setBubbles(newBubbles);
       setMoves(moves - 1);
       playPopSound();
@@ -145,17 +206,51 @@ export default function GameScreen({ navigation }) {
           t('levelCompletedDesc').replace('{level}', level),
           [{ text: t('nextLevel'), onPress: () => setLevel(level + 1) }]
         );
+      } else {
+        // Check if there are no more matches after popping
+        setTimeout(() => {
+          if (moves > 0 && remainingBubbles > 0 && !checkForPossibleMatches()) {
+            Alert.alert(
+              t('noMoreMatches'),
+              t('shuffleOrEnd'),
+              [
+                { text: t('shuffle'), onPress: () => shuffleBoard() },
+                { text: t('endGame'), onPress: () => {
+                  setGameOver(true);
+                  navigation.navigate('GameOver', { score: newScore });
+                }}
+              ]
+            );
+          }
+        }, 500); // Small delay to let animations complete
       }
 
       if (moves <= 1) {
         setGameOver(true);
-        navigation.navigate('GameOver', { score: score + matches.length * 10 });
+        navigation.navigate('GameOver', { score: newScore });
       }
     } else {
       setMoves(moves - 1);
       if (moves <= 1) {
         setGameOver(true);
         navigation.navigate('GameOver', { score });
+      } else {
+        // Check if there are no more matches after using a move
+        setTimeout(() => {
+          if (!checkForPossibleMatches()) {
+            Alert.alert(
+              t('noMoreMatches'),
+              t('shuffleOrEnd'),
+              [
+                { text: t('shuffle'), onPress: () => shuffleBoard() },
+                { text: t('endGame'), onPress: () => {
+                  setGameOver(true);
+                  navigation.navigate('GameOver', { score });
+                }}
+              ]
+            );
+          }
+        }, 100);
       }
     }
   };
