@@ -45,22 +45,6 @@ For Android: npm run android
 For iOS: npm run ios
 For Web: npm run web
 
-## Project Structure
-
-bubble-smash/
-├── App.js              # Main app entry point
-├── index.js            # Expo entry point
-├── src/
-│   ├── assets/         # Game assets (images, sounds)
-│   ├── components/     # Reusable components (e.g., LanguageSelector)
-│   ├── context/        # Context for managing language state
-│   ├── screens/        # Game screens (Home, Game, Game Over)
-│   ├── translations/   # Translation files for multilingual support
-├── package.json        # Project dependencies and scripts
-├── app.json            # Expo configuration
-├── .gitignore          # Git ignore rules
-
-
 ## Dependencies
 
 React Native: 
