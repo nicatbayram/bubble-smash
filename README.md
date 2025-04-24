@@ -53,3 +53,8 @@ React Navigation:
 Expo AV: 
 
 ## ScreenShots
+![1](https://github.com/user-attachments/assets/2e2a83a2-243c-4eb3-8c6a-9d218d61af27)
+![2](https://github.com/user-attachments/assets/bf38988e-89e9-44b5-ace6-397267e40fa7)
+![3](https://github.com/user-attachments/assets/72f99644-3238-4c2c-b2e4-498aae726d77)
+
+
